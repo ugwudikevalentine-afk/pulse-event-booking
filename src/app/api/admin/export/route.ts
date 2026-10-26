@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next";
+import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 
@@ -24,18 +24,25 @@ export async function GET(req: NextRequest) {
       const bookings = await prisma.booking.findMany({
         include: {
           user: { select: { name: true, email: true } },
-          event: { select: { title: true } },
-          items: true,
+          items: {
+            include: {
+              ticketType: {
+                include: {
+                  event: { select: { title: true } },
+                },
+              },
+            },
+          },
         },
         orderBy: { createdAt: "desc" },
       });
 
       const header = "Booking ID,User Name,User Email,Event Title,Total Amount,Status,Created At\n";
       const rows = bookings
-        .map(
-          (b) =>
-            `"${b.id}","${b.user.name || ""}","${b.user.email}","${b.event.title.replace(/"/g, '""')}",${b.totalAmount},"${b.status}","${b.createdAt.toISOString()}"`
-        )
+        .map((b) => {
+          const eventTitle = b.items[0]?.ticketType?.event?.title || "N/A";
+          return `"${b.id}","${b.user.name || ""}","${b.user.email}","${eventTitle.replace(/"/g, '""')}",${b.totalAmount},"${b.status}","${b.createdAt.toISOString()}"`;
+        })
         .join("\n");
 
       return new NextResponse(header + rows, {
@@ -48,14 +55,17 @@ export async function GET(req: NextRequest) {
 
     if (type === "events") {
       const events = await prisma.event.findMany({
+        include: {
+          ticketTypes: true,
+        },
         orderBy: { createdAt: "desc" },
       });
 
-      const header = "Event ID,Title,Slug,Category,Location,Date,Price,Available Tickets,Status\n";
+      const header = "Event ID,Title,Slug,Category,Venue,City,Country,Start Date,Status\n";
       const rows = events
         .map(
           (e) =>
-            `"${e.id}","${e.title.replace(/"/g, '""')}","${e.slug}","${e.category}","${e.location.replace(/"/g, '""')}","${e.date.toISOString()}",${e.price},${e.availableTickets},"${e.status}"`
+            `"${e.id}","${e.title.replace(/"/g, '""')}","${e.slug}","${e.category}","${e.venue.replace(/"/g, '""')}","${e.city.replace(/"/g, '""')}","${e.country}","${e.startDate.toISOString()}","${e.status}"`
         )
         .join("\n");
 

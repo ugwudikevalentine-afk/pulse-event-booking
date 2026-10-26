@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(req: NextRequest) {
@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
     }
 
     const user = await prisma.user.findFirst({
-      where: { emailVerified: token },
+      where: { emailVerificationToken: token },
     });
 
     if (!user) {
@@ -19,7 +19,10 @@ export async function GET(req: NextRequest) {
 
     await prisma.user.update({
       where: { id: user.id },
-      data: { emailVerified: new Date().toISOString() },
+      data: {
+        isEmailVerified: true,
+        emailVerificationToken: null,
+      },
     });
 
     return NextResponse.redirect(new URL("/login?verified=true", req.url));
