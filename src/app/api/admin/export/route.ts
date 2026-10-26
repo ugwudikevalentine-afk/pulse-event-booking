@@ -1,6 +1,8 @@
-﻿import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/auth";
+﻿import { NextRequest, NextResponse } from "next";
+import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+
+export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
   try {
@@ -9,101 +11,67 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const user = await prisma.user.findUnique({
+    const currentUser = await prisma.user.findUnique({
       where: { id: session.user.id },
       select: { role: true },
     });
 
-    if (user?.role !== "ADMIN") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    if (currentUser?.role !== "ADMIN") {
+      return NextResponse.json({ error: "Forbidden: Admin access required" }, { status: 403 });
     }
 
     const type = req.nextUrl.searchParams.get("type") || "bookings";
 
     if (type === "bookings") {
       const bookings = await prisma.booking.findMany({
-        orderBy: { createdAt: "desc" },
         include: {
           user: { select: { name: true, email: true } },
-          items: {
-            include: {
-              ticketType: {
-                include: { event: { select: { title: true } } },
-              },
-            },
-          },
+          event: { select: { title: true } },
+          items: true,
         },
+        orderBy: { createdAt: "desc" },
       });
 
-      const headers = [
-        "Reference", "Customer Name", "Customer Email",
-        "Event", "Total Amount", "Currency",
-        "Status", "Payment Status", "Created At",
-      ];
+      const header = "Booking ID,User Name,User Email,Event Title,Total Amount,Status,Created At\n";
+      const rows = bookings
+        .map(
+          (b) =>
+            `"${b.id}","${b.user.name || ""}","${b.user.email}","${b.event.title.replace(/"/g, '""')}",${b.totalAmount},"${b.status}","${b.createdAt.toISOString()}"`
+        )
+        .join("\n");
 
-      const rows = bookings.map((b) => {
-        const eventNames = [...new Set(b.items.map((i) => i.ticketType.event.title))].join("; ");
-        return [
-          b.bookingReference,
-          `"${b.user.name}"`,
-          b.user.email,
-          `"${eventNames}"`,
-          Number(b.totalAmount).toFixed(2),
-          b.currency,
-          b.status,
-          b.paymentStatus,
-          b.createdAt.toISOString(),
-        ].join(",");
-      });
-
-      const csv = [headers.join(","), ...rows].join("\n");
-
-      return new NextResponse(csv, {
+      return new NextResponse(header + rows, {
         headers: {
-          "Content-Type": "text/csv; charset=utf-8",
-          "Content-Disposition": `attachment; filename="pulse-bookings-${new Date().toISOString().slice(0, 10)}.csv"`,
+          "Content-Type": "text/csv",
+          "Content-Disposition": 'attachment; filename="bookings-export.csv"',
         },
       });
     }
 
-    if (type === "users") {
-      const users = await prisma.user.findMany({
+    if (type === "events") {
+      const events = await prisma.event.findMany({
         orderBy: { createdAt: "desc" },
-        select: {
-          name: true, email: true, role: true,
-          isActive: true, isEmailVerified: true, createdAt: true,
-          _count: { select: { bookings: true } },
-        },
       });
 
-      const headers = [
-        "Name", "Email", "Role", "Active",
-        "Email Verified", "Total Bookings", "Joined",
-      ];
+      const header = "Event ID,Title,Slug,Category,Location,Date,Price,Available Tickets,Status\n";
+      const rows = events
+        .map(
+          (e) =>
+            `"${e.id}","${e.title.replace(/"/g, '""')}","${e.slug}","${e.category}","${e.location.replace(/"/g, '""')}","${e.date.toISOString()}",${e.price},${e.availableTickets},"${e.status}"`
+        )
+        .join("\n");
 
-      const rows = users.map((u) => [
-        `"${u.name}"`,
-        u.email,
-        u.role,
-        u.isActive ? "Yes" : "No",
-        u.isEmailVerified ? "Yes" : "No",
-        u._count.bookings,
-        u.createdAt.toISOString(),
-      ].join(","));
-
-      const csv = [headers.join(","), ...rows].join("\n");
-
-      return new NextResponse(csv, {
+      return new NextResponse(header + rows, {
         headers: {
-          "Content-Type": "text/csv; charset=utf-8",
-          "Content-Disposition": `attachment; filename="pulse-users-${new Date().toISOString().slice(0, 10)}.csv"`,
+          "Content-Type": "text/csv",
+          "Content-Disposition": 'attachment; filename="events-export.csv"',
         },
       });
     }
 
     return NextResponse.json({ error: "Invalid export type" }, { status: 400 });
-  } catch (error) {
-    console.error("Export error:", error);
-    return NextResponse.json({ error: "Export failed" }, { status: 500 });
+  } catch (err: unknown) {
+    console.error("Export error:", err);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

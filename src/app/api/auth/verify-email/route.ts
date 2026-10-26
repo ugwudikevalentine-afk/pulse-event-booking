@@ -1,5 +1,7 @@
-﻿import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next";
 import { prisma } from "@/lib/prisma";
+
+export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
   try {
@@ -10,28 +12,21 @@ export async function GET(req: NextRequest) {
     }
 
     const user = await prisma.user.findFirst({
-      where: {
-        emailVerificationToken: token,
-        emailVerificationExpires: { gt: new Date() },
-      },
+      where: { emailVerified: token },
     });
 
     if (!user) {
-      return NextResponse.json({ error: "Invalid or expired verification link" }, { status: 400 });
+      return NextResponse.json({ error: "Invalid or expired token" }, { status: 400 });
     }
 
     await prisma.user.update({
       where: { id: user.id },
-      data: {
-        isEmailVerified: true,
-        emailVerificationToken: null,
-        emailVerificationExpires: null,
-      },
+      data: { emailVerified: new Date().toISOString() },
     });
 
-    return NextResponse.json({ message: "Email verified successfully" });
-  } catch (error) {
-    console.error("Verify email error:", error);
+    return NextResponse.redirect(new URL("/login?verified=true", req.url));
+  } catch (err: unknown) {
+    console.error("Verify email error:", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
