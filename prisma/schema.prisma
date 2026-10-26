@@ -1,0 +1,171 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                       String    @id @default(cuid())
+  name                     String
+  email                    String    @unique
+  password                 String
+  phone                    String?
+  country                  String?
+  role                     Role      @default(USER)
+  isActive                 Boolean   @default(true)
+  isEmailVerified          Boolean   @default(false)
+  emailVerificationToken   String?
+  emailVerificationExpires DateTime?
+  passwordResetToken       String?
+  passwordResetExpires     DateTime?
+  tokenVersion             Int       @default(1)
+  acceptedTerms            Boolean   @default(false)
+  acceptedTermsAt          DateTime?
+  createdAt                DateTime  @default(now())
+  updatedAt                DateTime  @updatedAt
+
+  bookings Booking[]
+  payments Payment[]
+
+  @@map("users")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model Event {
+  id          String        @id @default(cuid())
+  title       String
+  slug        String        @unique
+  description String?       @db.Text
+  category    EventCategory @default(OTHER)
+  venue       String
+  city        String
+  country     String
+  address     String?
+  startDate   DateTime
+  endDate     DateTime?
+  image       String?
+  status      EventStatus   @default(DRAFT)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  ticketTypes TicketType[]
+
+  @@map("events")
+}
+
+enum EventCategory {
+  CONCERT
+  SPORTS
+  CONFERENCE
+  FESTIVAL
+  THEATER
+  WORKSHOP
+  OTHER
+}
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  CANCELLED
+  COMPLETED
+}
+
+model TicketType {
+  id           String    @id @default(cuid())
+  eventId      String
+  name         String
+  description  String?
+  price        Decimal   @db.Decimal(10, 2)
+  quantity     Int
+  sold         Int       @default(0)
+  saleStartsAt DateTime?
+  saleEndsAt   DateTime?
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+
+  event        Event         @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  bookingItems BookingItem[]
+
+  @@map("ticket_types")
+}
+
+model Booking {
+  id               String        @id @default(cuid())
+  userId           String
+  bookingReference String        @unique
+  status           BookingStatus @default(PENDING)
+  paymentStatus    PaymentStatus @default(UNPAID)
+  totalAmount      Decimal       @db.Decimal(10, 2)
+  currency         String        @default("USD")
+  notes            String?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  user    User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items   BookingItem[]
+  payment Payment?
+
+  @@map("bookings")
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+enum PaymentStatus {
+  UNPAID
+  PAID
+  FAILED
+  REFUNDED
+}
+
+model BookingItem {
+  id           String  @id @default(cuid())
+  bookingId    String
+  ticketTypeId String
+  quantity     Int
+  unitPrice    Decimal @db.Decimal(10, 2)
+  totalPrice   Decimal @db.Decimal(10, 2)
+
+  booking    Booking    @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  ticketType TicketType @relation(fields: [ticketTypeId], references: [id])
+
+  @@map("booking_items")
+}
+
+model Payment {
+  id                    String       @id @default(cuid())
+  bookingId             String       @unique
+  userId                String
+  stripeSessionId       String?      @unique
+  stripePaymentIntentId String?      @unique
+  amount                Decimal      @db.Decimal(10, 2)
+  currency              String       @default("USD")
+  status                StripeStatus @default(PENDING)
+  paymentMethod         String?
+  paidAt                DateTime?
+  refundedAt            DateTime?
+  createdAt             DateTime     @default(now())
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id])
+
+  @@map("payments")
+}
+
+enum StripeStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
