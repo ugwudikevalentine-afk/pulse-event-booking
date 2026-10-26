@@ -13,49 +13,7 @@
   --color-info: #3B82F6;
 }
 
-html {
-  scroll-behavior: smooth;
-}
-
-body {
-  background-color: #0B0D0C;
-  color: #F5F5EF;
-}
-
-/* Light zone for transactional pages */
 .light-zone {
-  background-color: #F5F5EF;
-  color: #202522;
-}
-
-.light-zone input,
-.light-zone select,
-.light-zone textarea {
-  background-color: #ffffff;
-  color: #202522;
-  border-color: #6B7A6F;
-}
-
-/* Scrollbar styling */
-::-webkit-scrollbar {
-  width: 8px;
-}
-::-webkit-scrollbar-track {
-  background: #0B0D0C;
-}
-::-webkit-scrollbar-thumb {
-  background: #202522;
-  border-radius: 4px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #6B7A6F;
-}
-
-/* Accessibility: respect reduced motion */
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
+  background-color: var(--color-warm-white);
+  color: var(--color-graphite);
 }
