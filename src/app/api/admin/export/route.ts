@@ -1,5 +1,5 @@
-﻿import { NextRequest, NextResponse } from "next";
-import { auth } from "@/lib/auth";
+import { NextRequest, NextResponse } from "next";
+import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
