@@ -1,5 +1,6 @@
-﻿module.exports = {
+﻿// ✅ CORRECT (Tailwind v4 style)
+module.exports = {
   plugins: {
-    "@tailwindcss/postcss": {},
+    '@tailwindcss/postcss': {},
   },
 };
