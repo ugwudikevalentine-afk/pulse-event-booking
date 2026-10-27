@@ -1,19 +1,29 @@
 import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log("Seeding database...");
+  console.log("Cleaning old data and re-seeding database...");
 
-  // Create admin user (password: admin123)
-  const bcrypt = await import("bcryptjs");
+  // WIPE OLD DATA TO REMOVE TEST LISTINGS
+  await prisma.payment.deleteMany({});
+  await prisma.bookingItem.deleteMany({});
+  await prisma.booking.deleteMany({});
+  await prisma.ticketType.deleteMany({});
+  await prisma.event.deleteMany({});
+
+  // CREATE / UPSERT ADMIN USER (password: admin123)
   const adminPassword = await bcrypt.hash("admin123", 12);
-
   await prisma.user.upsert({
     where: { email: "admin@eventbook.com" },
-    update: {},
+    update: {
+      password: adminPassword,
+      role: "ADMIN",
+      isEmailVerified: true,
+    },
     create: {
-      name: "Admin",
+      name: "Pulse Admin",
       email: "admin@eventbook.com",
       password: adminPassword,
       role: "ADMIN",
@@ -21,79 +31,80 @@ async function main() {
     },
   });
 
-  // Create demo events
+  // HIGH QUALITY DEMO EVENTS WITH 2026/2027 DATES
   const events = [
     {
-      title: "Summer Music Festival 2025",
-      slug: "summer-music-festival-2025",
-      description: "Three days of live music featuring top artists from around the world. Food trucks, art installations, and unforgettable performances under the stars.",
-      category: "FESTIVAL" as const,
-      venue: "Riverside Park",
-      city: "Austin",
-      country: "USA",
-      startDate: new Date("2025-08-15T18:00:00Z"),
-      endDate: new Date("2025-08-17T23:00:00Z"),
-      status: "PUBLISHED" as const,
-      ticketTypes: [
-        { name: "General Admission", price: 89.99, quantity: 5000, description: "Access to all main stages" },
-        { name: "VIP Pass", price: 249.99, quantity: 500, description: "VIP lounge, front-row access, complimentary drinks" },
-      ],
-    },
-    {
-      title: "Tech Innovation Summit",
-      slug: "tech-innovation-summit",
-      description: "Join 2,000+ developers, founders, and tech leaders for two days of keynotes, workshops, and networking. Topics include AI, Web3, and cloud infrastructure.",
+      title: "Global Tech Innovation Summit 2026",
+      slug: "global-tech-innovation-summit-2026",
+      description: "Join 2,500+ leaders, engineers, and founders for two days of keynotes, tech workshops, and executive networking.",
       category: "CONFERENCE" as const,
-      venue: "Convention Center",
+      venue: "Moscone Center",
       city: "San Francisco",
       country: "USA",
-      startDate: new Date("2025-09-20T09:00:00Z"),
-      endDate: new Date("2025-09-21T17:00:00Z"),
+      startDate: new Date("2026-11-15T09:00:00Z"),
+      endDate: new Date("2026-11-16T18:00:00Z"),
+      image: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?q=80&w=1200&auto=format&fit=crop",
       status: "PUBLISHED" as const,
       ticketTypes: [
-        { name: "Standard", price: 199.00, quantity: 1500, description: "All sessions and expo hall" },
-        { name: "Premium", price: 499.00, quantity: 300, description: "Workshops, priority seating, networking dinner" },
+        { name: "General Pass", price: 199.00, quantity: 1500, description: "All main stage sessions and expo floor access." },
+        { name: "VIP Executive Pass", price: 499.00, quantity: 200, description: "Priority seating, VIP lounge, and networking dinner." },
       ],
     },
     {
-      title: "Jazz Night Live",
-      slug: "jazz-night-live",
-      description: "An intimate evening of smooth jazz featuring the Marcus Cole Quartet. Limited seating for an unforgettable experience.",
+      title: "Neon Horizon Music Festival",
+      slug: "neon-horizon-music-festival",
+      description: "Three days of live electronic and indie music across 4 open-air stages with immersive light art installations.",
+      category: "FESTIVAL" as const,
+      venue: "Zilker Park",
+      city: "Austin",
+      country: "USA",
+      startDate: new Date("2026-12-04T16:00:00Z"),
+      endDate: new Date("2026-12-06T23:59:00Z"),
+      image: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?q=80&w=1200&auto=format&fit=crop",
+      status: "PUBLISHED" as const,
+      ticketTypes: [
+        { name: "3-Day GA Ticket", price: 120.00, quantity: 3000, description: "Full 3-day access to all music stages." },
+        { name: "VIP Backstage Pass", price: 290.00, quantity: 300, description: "Fast-track entry, VIP lounge, and private bar." },
+      ],
+    },
+    {
+      title: "Smooth Jazz & Soul Night",
+      slug: "smooth-jazz-soul-night",
+      description: "An intimate evening of world-class jazz, craft cocktails, and soul music in downtown Manhattan.",
       category: "CONCERT" as const,
-      venue: "Blue Note Lounge",
+      venue: "Blue Note Jazz Club",
       city: "New York",
       country: "USA",
-      startDate: new Date("2025-07-25T20:00:00Z"),
+      startDate: new Date("2026-11-28T20:00:00Z"),
+      image: "https://images.unsplash.com/photo-1511192336575-5a79af67a629?q=80&w=1200&auto=format&fit=crop",
       status: "PUBLISHED" as const,
       ticketTypes: [
-        { name: "Standard Seat", price: 45.00, quantity: 150, description: "General seating" },
-        { name: "Front Row", price: 95.00, quantity: 30, description: "Front row table with drink service" },
+        { name: "Main Floor Seat", price: 55.00, quantity: 150, description: "Standard table seating." },
+        { name: "Front Row Stage Table", price: 110.00, quantity: 25, description: "Front row table including welcome drink." },
       ],
     },
     {
-      title: "City Marathon 2025",
-      slug: "city-marathon-2025",
-      description: "Annual city marathon through scenic downtown routes. Categories: Full marathon, half marathon, and 10K.",
+      title: "International City Marathon 2027",
+      slug: "international-city-marathon-2027",
+      description: "Run through iconic downtown landmarks. Features 10K, Half Marathon, and Full 42K Marathon courses.",
       category: "SPORTS" as const,
-      venue: "Downtown",
+      venue: "Grant Park",
       city: "Chicago",
       country: "USA",
-      startDate: new Date("2025-10-12T07:00:00Z"),
+      startDate: new Date("2027-04-18T07:00:00Z"),
+      image: "https://images.unsplash.com/photo-1452626038306-9aae5e071dd3?q=80&w=1200&auto=format&fit=crop",
       status: "PUBLISHED" as const,
       ticketTypes: [
-        { name: "10K Run", price: 35.00, quantity: 2000, description: "10K route with finisher medal" },
-        { name: "Half Marathon", price: 65.00, quantity: 3000, description: "Half marathon with finisher medal and t-shirt" },
-        { name: "Full Marathon", price: 95.00, quantity: 1000, description: "Full marathon with finisher medal, t-shirt, and photo package" },
+        { name: "10K Entry", price: 40.00, quantity: 1000, description: "Course entry, bib, and finisher medal." },
+        { name: "Full Marathon Pass", price: 85.00, quantity: 1500, description: "Full course entry, technical t-shirt, and photo package." },
       ],
     },
   ];
 
   for (const event of events) {
     const { ticketTypes, ...eventData } = event;
-    await prisma.event.upsert({
-      where: { slug: event.slug },
-      update: {},
-      create: {
+    await prisma.event.create({
+      data: {
         ...eventData,
         ticketTypes: {
           create: ticketTypes,
@@ -102,11 +113,15 @@ async function main() {
     });
   }
 
-  console.log("✅ Seeding complete!");
-  console.log("   Admin login: admin@eventbook.com / admin123");
-  console.log("   4 demo events created");
+  console.log("✅ Seed complete! Pristine demo events created.");
+  console.log("   Admin Credentials: admin@eventbook.com / admin123");
 }
 
 main()
-  .catch(console.error)
-  .finally(() => prisma.$disconnect());
+  .catch((e) => {
+    console.error(e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });

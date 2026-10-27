@@ -1,4 +1,4 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { FadeIn } from "@/components/motion/fade-in";
@@ -15,11 +15,25 @@ export default async function HomePage() {
     take: 6,
   });
 
-  const stats = await prisma.event.aggregate({ _count: { id: true } });
+  const [eventCount, categoriesGroup, bookingCount] = await Promise.all([
+    prisma.event.count({ where: { status: "PUBLISHED" } }),
+    prisma.event.groupBy({
+      by: ["category"],
+      where: { status: "PUBLISHED" },
+    }),
+    prisma.booking.count(),
+  ]);
+
+  const categoryCount = categoriesGroup.length || 4;
 
   const categoryEmojis: Record<string, string> = {
-    CONCERT: "\uD83C\uDFB5", SPORTS: "\u26BD", CONFERENCE: "\uD83C\uDFA4",
-    FESTIVAL: "\uD83C\uDFAA", THEATER: "\uD83C\uDFAD", WORKSHOP: "\uD83D\uDEE0\uFE0F", OTHER: "\uD83D\uDCC5",
+    CONCERT: "🎵",
+    SPORTS: "⚽",
+    CONFERENCE: "🎤",
+    FESTIVAL: "🎪",
+    THEATER: "🎭",
+    WORKSHOP: "🛠️",
+    OTHER: "📅",
   };
 
   return (
@@ -30,14 +44,12 @@ export default async function HomePage() {
           <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-lime/5 rounded-full blur-[120px]" />
           <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-lime/3 rounded-full blur-[100px]" />
         </div>
-
         <div className="relative max-w-6xl mx-auto px-4 py-32">
           <FadeIn delay={0.1}>
             <span className="inline-block border border-lime/30 text-lime px-3 py-1 rounded-full text-xs font-medium tracking-wider uppercase mb-8">
               Events &middot; Travel &middot; Experiences
             </span>
           </FadeIn>
-
           <FadeIn delay={0.2}>
             <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold leading-[0.95] tracking-tight mb-8">
               <span className="text-warm-white">Be there</span>
@@ -48,20 +60,26 @@ export default async function HomePage() {
               <span className="text-warm-white">happens.</span>
             </h1>
           </FadeIn>
-
           <FadeIn delay={0.4}>
             <p className="text-lg text-slate-moss max-w-md mb-10">
               Discover events. Plan your journey. Make the moment yours.
             </p>
           </FadeIn>
-
           <FadeIn delay={0.5}>
             <div className="flex flex-wrap gap-4">
-              <Link href="/events" className="bg-lime text-obsidian px-8 py-4 rounded-lg font-bold text-sm hover:bg-lime/90 transition inline-flex items-center gap-2">
+              <Link
+                href="/events"
+                className="bg-lime text-obsidian px-8 py-4 rounded-lg font-bold text-sm hover:bg-lime/90 transition inline-flex items-center gap-2"
+              >
                 Explore Events
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                </svg>
               </Link>
-              <Link href="/register" className="border border-slate-moss/40 text-warm-white px-8 py-4 rounded-lg font-medium text-sm hover:border-lime/50 hover:text-lime transition">
+              <Link
+                href="/register"
+                className="border border-slate-moss/40 text-warm-white px-8 py-4 rounded-lg font-medium text-sm hover:border-lime/50 hover:text-lime transition"
+              >
                 Create Account
               </Link>
             </div>
@@ -74,20 +92,20 @@ export default async function HomePage() {
         <div className="max-w-6xl mx-auto px-4 py-12 grid grid-cols-2 md:grid-cols-4 gap-8">
           <FadeIn delay={0}>
             <div className="text-center">
-              <div className="text-4xl font-bold text-lime"><CountUp value={stats._count.id} /></div>
+              <div className="text-4xl font-bold text-lime"><CountUp value={eventCount} /></div>
               <div className="text-sm text-slate-moss mt-2">Live Events</div>
             </div>
           </FadeIn>
           <FadeIn delay={0.1}>
             <div className="text-center">
-              <div className="text-4xl font-bold text-lime"><CountUp value={7} /></div>
-              <div className="text-sm text-slate-moss mt-2">Categories</div>
+              <div className="text-4xl font-bold text-lime"><CountUp value={categoryCount} /></div>
+              <div className="text-sm text-slate-moss mt-2">Active Categories</div>
             </div>
           </FadeIn>
           <FadeIn delay={0.2}>
             <div className="text-center">
-              <div className="text-4xl font-bold text-warm-white">24/7</div>
-              <div className="text-sm text-slate-moss mt-2">Online Booking</div>
+              <div className="text-4xl font-bold text-warm-white"><CountUp value={bookingCount} /></div>
+              <div className="text-sm text-slate-moss mt-2">Confirmed Bookings</div>
             </div>
           </FadeIn>
           <FadeIn delay={0.3}>
@@ -105,7 +123,6 @@ export default async function HomePage() {
           <span className="text-xs font-medium text-lime tracking-widest uppercase">How it works</span>
           <h2 className="text-3xl md:text-4xl font-bold mt-3 mb-16">Three steps. Zero friction.</h2>
         </FadeIn>
-
         <Stagger className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <StaggerItem>
             <div className="group p-8 rounded-2xl border border-slate-moss/20 bg-graphite/30 hover:border-lime/30 transition-colors">
@@ -162,7 +179,7 @@ export default async function HomePage() {
                         <img src={event.image} alt={event.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-6xl opacity-40">
-                          {categoryEmojis[event.category] || "\uD83D\uDCC5"}
+                          {categoryEmojis[event.category] || "📅"}
                         </div>
                       )}
                       <span className="absolute top-3 left-3 bg-lime text-obsidian px-2 py-0.5 rounded text-xs font-bold">

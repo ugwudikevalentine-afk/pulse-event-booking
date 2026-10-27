@@ -1,4 +1,4 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 
 export default function Footer() {
   return (
@@ -32,17 +32,17 @@ export default function Footer() {
             </ul>
           </div>
           <div>
-            <h4 className="text-warm-white font-semibold mb-4 text-sm uppercase tracking-wider">Legal</h4>
+            <h4 className="text-warm-white font-semibold mb-4 text-sm uppercase tracking-wider">Platform</h4>
             <ul className="space-y-2 text-sm">
-              <li><Link href="/terms" className="text-slate-moss hover:text-lime transition-colors">Terms of Service</Link></li>
-              <li><Link href="/privacy" className="text-slate-moss hover:text-lime transition-colors">Privacy Policy</Link></li>
-              <li><Link href="/faq" className="text-slate-moss hover:text-lime transition-colors">FAQ</Link></li>
+              <li><Link href="/events" className="text-slate-moss hover:text-lime transition-colors">Ticketing Engine</Link></li>
+              <li><Link href="/admin" className="text-slate-moss hover:text-lime transition-colors">Admin Portal</Link></li>
+              <li><Link href="/sitemap.xml" className="text-slate-moss hover:text-lime transition-colors">Sitemap</Link></li>
             </ul>
           </div>
         </div>
         <div className="border-t border-slate-moss/20 mt-12 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-slate-moss">&copy; {2025} PULSE. All rights reserved.</p>
-          <p className="text-xs text-slate-moss/50">Powered by PULSE SaaS Starter Kit</p>
+          <p className="text-xs text-slate-moss">&copy; 2026 PULSE Events Platform. All rights reserved.</p>
+          <p className="text-xs text-slate-moss/60">Modern Event Booking & Ticketing Solution</p>
         </div>
       </div>
     </footer>
