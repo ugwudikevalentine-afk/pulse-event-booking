@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-// Forces dynamic runtime rendering to prevent static build-time failures
-export const dynamic = "force-dynamic";
-
 export async function GET(req: NextRequest) {
   try {
     const token = req.nextUrl.searchParams.get("token");
