@@ -26,6 +26,15 @@ const adminRoutes = ["/admin"];
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
+  // 🛡️ SAFETY GUARD: Always allow static assets, next internal routes, and media through immediately
+  if (
+    pathname.startsWith("/_next") ||
+    pathname.startsWith("/api/auth") ||
+    pathname.match(/\.(png|jpg|jpeg|gif|webp|svg|ico|css|js|woff|woff2|ttf|otf)$/)
+  ) {
+    return NextResponse.next();
+  }
+
   const isPublic = publicRoutes.some(
     (route) => pathname === route || pathname.startsWith(route + "/")
   );
@@ -56,6 +65,16 @@ export async function proxy(req: NextRequest) {
   return NextResponse.next();
 }
 
-export const proxyConfig = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.svg).*)"],
+// ✅ Correct export name is `config` (Next.js requirement)
+export const config = {
+  matcher: [
+    /*
+     * Match all request paths except for:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - public files with extensions (e.g. .svg, .png, .jpg, .css, .js)
+     */
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|css|js|woff|woff2|ttf|otf)$).*)",
+  ],
 };
