@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth-options";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { Calendar, Ticket, Users, DollarSign, QrCode, Plus, ArrowRight } from "lucide-react";
@@ -71,7 +71,7 @@ export default async function AdminDashboardPage() {
               <span className="text-[#94A3B8] text-sm font-medium">Total Revenue</span>
               <DollarSign className="w-5 h-5 text-[#C6FF00]" />
             </div>
-            <p className="text-3xl font-bold text-[#F5F5EF] mt-3"></p>
+            <p className="text-3xl font-bold text-[#F5F5EF] mt-3">${totalRevenue.toLocaleString()}</p>
           </div>
 
           <div className="bg-[#202522] border border-[#202522] rounded-2xl p-6">
@@ -143,11 +143,13 @@ export default async function AdminDashboardPage() {
               <tbody className="divide-y divide-[#0B0D0C]">
                 {recentBookings.map((b) => (
                   <tr key={b.id} className="hover:bg-[#0B0D0C]/40 transition-colors">
-                    <td className="px-4 py-3 font-medium text-[#F5F5EF]">{b.user.name || b.user.email}</td>
+                    <td className="px-4 py-3 font-medium text-[#F5F5EF]">{b.user?.name || b.user?.email || "Guest"}</td>
                     <td className="px-4 py-3">{b.items[0]?.ticketType?.event?.title || "N/A"}</td>
-                    <td className="px-4 py-3 font-medium text-[#C6FF00]"></td>
+                    <td className="px-4 py-3 font-medium text-[#C6FF00]">${b.totalPrice}</td>
                     <td className="px-4 py-3">
-                      <span className={px-2.5 py-1 rounded-full text-xs font-semibold }>
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
+                        b.paymentStatus === "CONFIRMED" ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30" : "bg-amber-500/10 text-amber-400 border border-amber-500/30"
+                      }`}>
                         {b.paymentStatus}
                       </span>
                     </td>
