@@ -4,6 +4,9 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { Calendar, Ticket, Users, DollarSign, QrCode, Plus, ArrowRight } from "lucide-react";
 
+// Allow this authenticated admin route to use cookies/DB (required with cacheComponents)
+export const instant = false;
+
 export default async function AdminDashboardPage() {
   const session = await auth();
   const user = session?.user as Record<string, unknown> | undefined;
