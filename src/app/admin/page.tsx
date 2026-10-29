@@ -1,14 +1,14 @@
 import Link from "next/link";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { Calendar, Ticket, Users, DollarSign, QrCode, Plus, ArrowRight } from "lucide-react";
 
 export default async function AdminDashboardPage() {
-  const session = await getServerSession(authOptions);
+  const session = await auth();
+  const user = session?.user as Record<string, unknown> | undefined;
 
-  if (!session || (session.user as any)?.role !== "ADMIN") {
+  if (!session || user?.role !== "ADMIN") {
     redirect("/dashboard");
   }
 
