@@ -16,13 +16,13 @@ export default async function AdminDashboardPage() {
     prisma.event.count(),
     prisma.booking.count(),
     prisma.booking.aggregate({
-      _sum: { totalPrice: true },
-      where: { paymentStatus: "CONFIRMED" },
+      _sum: { totalAmount: true },
+      where: { paymentStatus: "PAID" },
     }),
     prisma.user.count(),
   ]);
 
-  const totalRevenue = totalRevenueResult._sum.totalPrice || 0;
+  const totalRevenue = Number(totalRevenueResult._sum?.totalAmount || 0);
 
   const recentBookings = await prisma.booking.findMany({
     take: 5,
@@ -145,10 +145,10 @@ export default async function AdminDashboardPage() {
                   <tr key={b.id} className="hover:bg-[#0B0D0C]/40 transition-colors">
                     <td className="px-4 py-3 font-medium text-[#F5F5EF]">{b.user?.name || b.user?.email || "Guest"}</td>
                     <td className="px-4 py-3">{b.items[0]?.ticketType?.event?.title || "N/A"}</td>
-                    <td className="px-4 py-3 font-medium text-[#C6FF00]">${b.totalPrice}</td>
+                    <td className="px-4 py-3 font-medium text-[#C6FF00]">${Number(b.totalAmount)}</td>
                     <td className="px-4 py-3">
                       <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
-                        b.paymentStatus === "CONFIRMED" ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30" : "bg-amber-500/10 text-amber-400 border border-amber-500/30"
+                        b.paymentStatus === "PAID" ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30" : "bg-amber-500/10 text-amber-400 border border-amber-500/30"
                       }`}>
                         {b.paymentStatus}
                       </span>

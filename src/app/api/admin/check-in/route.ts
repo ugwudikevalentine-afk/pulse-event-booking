@@ -21,6 +21,7 @@ export async function POST(req: NextRequest) {
       where: {
         OR: [
           { id: ticketCode },
+          { bookingReference: ticketCode },
           { id: { contains: ticketCode } },
         ],
       },
@@ -33,7 +34,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid ticket reference code." }, { status: 404 });
     }
 
-    if (booking.paymentStatus !== "CONFIRMED") {
+    if (booking.paymentStatus !== "PAID") {
       return NextResponse.json({ error: "Payment for this ticket is pending or unconfirmed." }, { status: 400 });
     }
 
